@@ -26,7 +26,7 @@ def generate_tags(text, num_tags=5):
     freq = Counter(filtered)
     return [word for word, count in freq.most_common(num_tags)]
 
-# URL-Parameter (z. B. vom Share Target) auslesen
+# URL-Parameter (vom Share Target) auslesen
 query_params = st.query_params
 default_title = query_params.get("title", [""])[0]
 default_content = query_params.get("text", [""])[0]

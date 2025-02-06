@@ -1,16 +1,19 @@
 document.getElementById('addPage').addEventListener('click', async () => {
   // Ruft die aktive Registerkarte ab
   let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  let title = encodeURIComponent(tab.title);
-  let url = encodeURIComponent(tab.url);
-  // Optional: Hier könnte auch ausgewählter Text erfasst werden; vorerst setzen wir ihn leer
-  let text = '';
+  let title = tab.title;
+  let url = tab.url;
+
+  // Lese den aktuell ausgewählten Text aus der Seite
+  let [result] = await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: () => window.getSelection().toString(),
+  });
+  let selectedText = result.result; // Falls nichts ausgewählt wurde, ist dies ein leerer String
+
+  // URL-Kodierung der Parameter
+  let targetURL = `https://smithmind.streamlit.app/?title=${encodeURIComponent(title)}&text=${encodeURIComponent(selectedText)}&url=${encodeURIComponent(url)}`;
   
-  // Hier wurde der Link zu Eurer App eingefügt
-  let targetURL = `https://neefmind-pwstwe23bs7eeqw3tsgvxf.streamlit.app/?title=${title}&text=${text}&url=${url}`;
-  
-  // Öffnet die SmithMind-App in einem neuen Tab
+  // Öffnet eure SmithMind-App in einem neuen Tab
   chrome.tabs.create({ url: targetURL });
 });
-
-  

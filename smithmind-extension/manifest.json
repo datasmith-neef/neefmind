@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "SmithMind Share",
+  "version": "1.0",
+  "description": "Fügt die aktuelle Webseite zu SmithMind hinzu.",
+  "permissions": [
+    "activeTab"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><rect width='16' height='16' fill='%2390EE90'/></svg>",
+      "48": "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><rect width='48' height='48' fill='%2390EE90'/></svg>",
+      "128": "data:image/svg+xml;charset=utf-8,<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'><rect width='128' height='128' fill='%2390EE90'/></svg>"
+    }
+  }
+}

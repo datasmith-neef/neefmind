@@ -28,9 +28,11 @@ def generate_tags(text, num_tags=5):
 
 # URL-Parameter (vom Share Target) auslesen
 query_params = st.query_params
-default_title = query_params.get("title", [""])[0]
-default_content = query_params.get("text", [""])[0]
-default_link = query_params.get("url", [""])[0]
+
+default_title = query_params.get("title", [""])[0] if query_params.get("title") else ""
+default_content = query_params.get("text", [""])[0] if query_params.get("text") else ""
+default_link = query_params.get("url", [""])[0] if query_params.get("url") else ""
+
 
 # Session-State initialisieren
 if "notes" not in st.session_state:

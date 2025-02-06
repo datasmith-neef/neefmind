@@ -7,7 +7,7 @@ document.getElementById('addPage').addEventListener('click', async () => {
   let text = '';
   
   // Hier wurde der Link zu Eurer App eingefügt
-  let targetURL = `https://smithmind.streamlit.app/?title=${title}&text=${text}&url=${url}`;
+  let targetURL = `https://neefmind-pwstwe23bs7eeqw3tsgvxf.streamlit.app/?title=${title}&text=${text}&url=${url}`;
   
   // Öffnet die SmithMind-App in einem neuen Tab
   chrome.tabs.create({ url: targetURL });

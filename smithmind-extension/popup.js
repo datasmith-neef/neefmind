@@ -12,7 +12,7 @@ document.getElementById('addPage').addEventListener('click', async () => {
   let selectedText = result.result; // Falls nichts ausgewählt wurde, ist dies ein leerer String
 
   // URL-Kodierung der Parameter
-  let targetURL = `https://smithmind.streamlit.app/?title=${encodeURIComponent(title)}&text=${encodeURIComponent(selectedText)}&url=${encodeURIComponent(url)}`;
+  let targetURL = `https://neefmind-pwstwe23bs7eeqw3tsgvxf.streamlit.app/?title=${encodeURIComponent(title)}&text=${encodeURIComponent(selectedText)}&url=${encodeURIComponent(url)}`;
   
   // Öffnet eure SmithMind-App in einem neuen Tab
   chrome.tabs.create({ url: targetURL });

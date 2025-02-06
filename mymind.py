@@ -4,7 +4,7 @@ from collections import Counter
 
 # Seitenkonfiguration
 st.set_page_config(
-    page_title="SmithMind",
+    page_title="SmithMind Proof of Concept",
     page_icon=":memo:",
     layout="wide"
 )
@@ -29,17 +29,22 @@ def generate_tags(text, num_tags=5):
 # URL-Parameter (vom Share Target) auslesen
 query_params = st.query_params
 
-default_title = query_params.get("title", [""])[0] if query_params.get("title") else ""
-default_content = query_params.get("text", [""])[0] if query_params.get("text") else ""
-default_link = query_params.get("url", [""])[0] if query_params.get("url") else ""
+# Für jeden Parameter holen wir die Liste und prüfen, ob sie Elemente enthält
+title_list = query_params.get("title", [])
+default_title = title_list[0] if title_list else ""
 
+text_list = query_params.get("text", [])
+default_content = text_list[0] if text_list else ""
+
+url_list = query_params.get("url", [])
+default_link = url_list[0] if url_list else ""
 
 # Session-State initialisieren
 if "notes" not in st.session_state:
     st.session_state.notes = []
 
 # Anwendungstitel
-st.title("SmithMind POC")
+st.title("SmithMind Proof of Concept")
 
 # Notizerfassung
 st.header("Neue Notiz hinzufügen")

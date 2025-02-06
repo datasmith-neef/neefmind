@@ -26,18 +26,20 @@ def generate_tags(text, num_tags=5):
     freq = Counter(filtered)
     return [word for word, count in freq.most_common(num_tags)]
 
+
 # URL-Parameter (vom Share Target) auslesen
 query_params = st.query_params
 
-# Für jeden Parameter holen wir die Liste und prüfen, ob sie Elemente enthält
+# Für jeden Parameter prüfen, ob die Liste Elemente enthält
 title_list = query_params.get("title", [])
-default_title = title_list[0] if title_list else ""
+default_title = title_list[0] if len(title_list) > 0 else ""
 
 text_list = query_params.get("text", [])
-default_content = text_list[0] if text_list else ""
+default_content = text_list[0] if len(text_list) > 0 else ""
 
 url_list = query_params.get("url", [])
-default_link = url_list[0] if url_list else ""
+default_link = url_list[0] if len(url_list) > 0 else ""
+
 
 # Session-State initialisieren
 if "notes" not in st.session_state:

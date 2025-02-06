@@ -37,7 +37,7 @@ if "notes" not in st.session_state:
     st.session_state.notes = []
 
 # Anwendungstitel
-st.title("SmithMind Proof of Concept")
+st.title("SmithMind POC")
 
 # Notizerfassung
 st.header("Neue Notiz hinzufügen")

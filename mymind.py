@@ -28,11 +28,15 @@ def generate_tags(text, num_tags=5):
 
 
 # URL-Parameter (vom Share Target) auslesen
+import urllib.parse
+
 query_params = st.query_params
 
-# Für jeden Parameter prüfen, ob die Liste Elemente enthält
-title_list = query_params.get("title", [])
-default_title = title_list[0] if len(title_list) > 0 else ""
+# Sicherstellen, dass Werte als Strings verarbeitet werden
+default_title = urllib.parse.unquote(query_params.get("title", ""))
+default_content = urllib.parse.unquote(query_params.get("text", ""))
+default_link = urllib.parse.unquote(query_params.get("url", ""))
+
 
 text_list = query_params.get("text", [])
 default_content = text_list[0] if len(text_list) > 0 else ""

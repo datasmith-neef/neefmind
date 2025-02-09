@@ -56,7 +56,7 @@ st.title("SmithMind POC")
 st.header("Neue Notiz hinzufügen")
 title = st.text_input("Titel der Notiz", default_title)
 content = st.text_area("Inhalt der Notiz", default_content)
-link = st.text_input("Link (optional)", default_link)
+link = st.text_input("Link (optional)", default_link if default_link else "")
 uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
 
 if st.button("Notiz speichern"):

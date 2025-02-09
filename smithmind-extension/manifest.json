@@ -3,6 +3,9 @@
   "name": "SmithMind Share",
   "version": "1.0",
   "description": "Fügt die aktuelle Webseite zu SmithMind hinzu.",
+ 
+  "host_permissions": ["<all_urls>"],
+
   "permissions": [
     "activeTab",
     "scripting"

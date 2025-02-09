@@ -9,11 +9,13 @@ document.getElementById('addPage').addEventListener('click', async () => {
     target: { tabId: tab.id },
     func: () => window.getSelection().toString(),
   });
-  let selectedText = result.result; // Falls nichts ausgewählt wurde, ist dies ein leerer String
+  let selectedText = result.result || document.querySelector("meta[name='description']")?.content || "";
+
 
   // URL-Kodierung der Parameter
   let targetURL = `https://neefmind-pwstwe23bs7eeqw3tsgvxf.streamlit.app/?title=${encodeURIComponent(title)}&text=${encodeURIComponent(selectedText)}&url=${encodeURIComponent(url)}`;
   
   // Öffnet eure SmithMind-App in einem neuen Tab
-  chrome.tabs.create({ url: targetURL });
+  chrome.tabs.create({ url: targetURL });alert("Seite erfolgreich zu SmithMind hinzugefügt!");
+
 });

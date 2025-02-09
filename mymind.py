@@ -57,16 +57,14 @@ uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "
 
 if st.button("Notiz speichern"):
     full_text = content
-    if uploaded_file is not None:
-        try:
-            file_content = uploaded_file.read().decode("utf-8", errors="ignore")
-        except Exception:
-            file_content = ""
-        full_text += "\n" + file_content
-    if link:
-        full_text += "\n" + link
+if uploaded_file is not None:
+    try:
+        file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+    except Exception:
+        file_content = ""
+    full_text += "\n" + file_content
 
-    tags = generate_tags(full_text)
+    tags = generate_tags(full_text + " " + link)  # Tags auch aus der URL generieren
     note = {"title": title, "content": content, "link": link, "tags": tags}
     st.session_state.notes.append(note)
     st.success("Notiz wurde gespeichert.")

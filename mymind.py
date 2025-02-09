@@ -4,7 +4,7 @@ from collections import Counter
 
 # Seitenkonfiguration
 st.set_page_config(
-    page_title="SmithMind Proof of Concept",
+    page_title="SmithMind POC",
     page_icon=":memo:",
     layout="wide"
 )

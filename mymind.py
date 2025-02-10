@@ -5,12 +5,11 @@ from collections import Counter
 from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassungen
 
 # OpenAI API-Key aus Streamlit Secrets
-api_key = st.secrets.get("secrets")
+api_key = st.secrets["secrets"]
 summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
 print(api_key)
 import streamlit as st
-
 
 
 # Seitenkonfiguration

@@ -1,7 +1,8 @@
 import streamlit as st
 import re
+import urllib.parse
 from collections import Counter
-# test
+
 # Seitenkonfiguration
 st.set_page_config(
     page_title="SmithMind POC",
@@ -28,22 +29,12 @@ def generate_tags(text, num_tags=5):
 
 
 # URL-Parameter (vom Share Target) auslesen
-import urllib.parse
-
 query_params = st.query_params
 
 # Sicherstellen, dass Werte als Strings verarbeitet werden
 default_title = urllib.parse.unquote(query_params.get("title", ""))
 default_content = urllib.parse.unquote(query_params.get("text", ""))
-default_link = urllib.parse.unquote(query_params.get("url", ""))
-
-
-text_list = query_params.get("text", [])
-default_content = text_list[0] if len(text_list) > 0 else ""
-
-url_list = query_params.get("url", [])
-default_link = url_list[0] if len(url_list) > 0 else ""
-
+default_link = urllib.parse.unquote(query_params.get("url", ""))  # Stelle sicher, dass URL korrekt übernommen wird
 
 # Session-State initialisieren
 if "notes" not in st.session_state:
@@ -54,22 +45,24 @@ st.title("SmithMind POC")
 
 # Notizerfassung
 st.header("Neue Notiz hinzufügen")
-title = st.text_input("Titel der Notiz", default_title)
-content = st.text_area("Inhalt der Notiz", default_content)
-link = st.text_input("Link (optional)", default_link if default_link else "")
+title = st.text_input("Titel der Notiz", value=default_title)
+content = st.text_area("Inhalt der Notiz", value=default_content)
+link = st.text_input("Link (optional)", value=default_link)  # Hier wird der Link sicher übernommen
+
 uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
 
 if st.button("Notiz speichern"):
-    full_text = content
-if uploaded_file is not None:
-    try:
-        file_content = uploaded_file.read().decode("utf-8", errors="ignore")
-    except Exception:
-        file_content = ""
-    full_text += "\n" + file_content
+    full_text = content  # Stelle sicher, dass der Inhalt immer initialisiert wird
+
+    if uploaded_file is not None:
+        try:
+            file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+        except Exception:
+            file_content = ""
+        full_text += "\n" + file_content
 
     tags = generate_tags(full_text + " " + link)  # Tags auch aus der URL generieren
-    note = {"title": title, "content": content, "link": link, "tags": tags}
+    note = {"title": title, "content": full_text, "link": link, "tags": tags}
     st.session_state.notes.append(note)
     st.success("Notiz wurde gespeichert.")
 

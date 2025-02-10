@@ -4,19 +4,6 @@ import urllib.parse
 from collections import Counter
 from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassungen
 
-# OpenAI API-Key aus Streamlit Secrets
-
-
-st.write("Verfügbare Secrets:", list(st.secrets.keys()))
-# Versuche, den API-Key aus dem "secrets"-Dictionary zu holen
-api_key = st.secrets["secrets"].get("openaikey")
-
-st.write(api_key)
-summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
-
-print(api_key)
-import streamlit as st
-
 
 # Seitenkonfiguration
 st.set_page_config(
@@ -24,6 +11,14 @@ st.set_page_config(
     page_icon=":memo:",
     layout="wide"
 )
+
+# OpenAI API-Key aus Streamlit Secrets
+#st.write("Verfügbare Secrets:", list(st.secrets.keys()))
+# Versuche, den API-Key aus dem "secrets"-Dictionary zu holen
+api_key = st.secrets["secrets"].get("openaikey")
+
+st.write(api_key)
+summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
 # Funktion zur Tag-Generierung
 def generate_tags(text, num_tags=5):

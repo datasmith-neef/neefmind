@@ -1,8 +1,9 @@
-import os
-from openai import OpenAI
-
 class WebpageSummarizer:
+    
+    
     def __init__(self, api_key):
+        import os
+        from openai import OpenAI    
         """
         Initialisiert die WebpageSummarizer-Klasse mit einem OpenAI API-Key.
         """

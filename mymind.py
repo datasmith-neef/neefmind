@@ -5,17 +5,11 @@ from collections import Counter
 from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassungen
 
 # OpenAI API-Key aus Streamlit Secrets
-api_key = st.secrets["secrets"]
+api_key = st.secrets.get("secrets")
 summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
 print(api_key)
 import streamlit as st
-
-# Debug: Prüfe, ob der API-Key in den Secrets geladen wurde
-if "openai_api_key" in st.secrets:
-    st.success("API-Key wurde erfolgreich aus den Streamlit Secrets geladen! 🚀")
-else:
-    st.error("Fehler: API-Key nicht gefunden! Stelle sicher, dass er in Streamlit Secrets gespeichert wurde.")
 
 
 

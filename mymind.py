@@ -8,7 +8,8 @@ from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassunge
 
 
 st.write("Verfügbare Secrets:", list(st.secrets.keys()))
-
+# Versuche, den API-Key aus dem "secrets"-Dictionary zu holen
+api_key = st.secrets["secrets"].get("openai_api_key")
 
 api_key = st.secrets.get("openai_api_key")
 st.write(api_key)

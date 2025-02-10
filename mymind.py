@@ -5,14 +5,14 @@ import json
 from collections import Counter
 from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassungen
 
-# Seitenkonfiguration
+# Seitenkonfiguration - Muss als erstes ausgeführt werden!
 st.set_page_config(
     page_title="SmithMind POC",
     page_icon=":memo:",
     layout="wide"
 )
 
-# OpenAI API-Key aus Streamlit Secrets
+# ✅ OpenAI API-Key (KEINE ÄNDERUNG)
 api_key = st.secrets["secrets"].get("openai_api_key")
 summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
@@ -25,7 +25,6 @@ def generate_tags(text, num_tags=5):
     freq = Counter(filtered)
     return [word for word, count in freq.most_common(num_tags)]
 
-
 # URL-Parameter auslesen
 query_params = st.query_params
 default_title = urllib.parse.unquote(query_params.get("title", ""))
@@ -36,16 +35,16 @@ default_link = urllib.parse.unquote(query_params.get("url", ""))
 if not default_content and default_link:
     default_content = summarizer.summarize(default_link)
 
-# Session-State initialisieren
+# ✅ Notizen im Session-State initialisieren
 if "notes" not in st.session_state:
     st.session_state.notes = []
 
-# Funktion zum Speichern von Notizen als JSON
+# ✅ Funktion zum Speichern der Notizen als JSON
 def save_notes_to_file():
     with open("notizen.json", "w", encoding="utf-8") as f:
         json.dump(st.session_state.notes, f, ensure_ascii=False, indent=4)
 
-# Funktion zum Laden von Notizen beim Start
+# ✅ Funktion zum Laden von Notizen
 def load_notes_from_file():
     try:
         with open("notizen.json", "r", encoding="utf-8") as f:
@@ -77,7 +76,7 @@ with st.sidebar:
         tags = generate_tags(full_text + " " + link)  # Tags auch aus der URL generieren
         note = {"title": title, "content": full_text, "link": link, "tags": tags}
         st.session_state.notes.append(note)
-        save_notes_to_file()  # Notiz speichern
+        save_notes_to_file()  # ✅ Notiz wird lokal gespeichert!
         st.success("Notiz wurde gespeichert.")
 
 # 🔹 **Hauptfenster: Anzeige der gespeicherten Notizen**

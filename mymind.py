@@ -8,6 +8,17 @@ from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassunge
 api_key = st.secrets["openai_api_key"]
 summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
+
+import streamlit as st
+
+# Debug: Prüfe, ob der API-Key in den Secrets geladen wurde
+if "openai_api_key" in st.secrets:
+    st.success("API-Key wurde erfolgreich aus den Streamlit Secrets geladen! 🚀")
+else:
+    st.error("Fehler: API-Key nicht gefunden! Stelle sicher, dass er in Streamlit Secrets gespeichert wurde.")
+
+
+
 # Seitenkonfiguration
 st.set_page_config(
     page_title="SmithMind POC",

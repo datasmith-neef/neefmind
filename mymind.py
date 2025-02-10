@@ -49,6 +49,22 @@ with st.sidebar:
     link = st.text_input("Link (optional)", value=default_link)
     uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
 
+    # Session-State für die Sidebar-Felder initialisieren
+if "title_input" not in st.session_state:
+    st.session_state.title_input = ""
+if "content_input" not in st.session_state:
+    st.session_state.content_input = ""
+if "link_input" not in st.session_state:
+    st.session_state.link_input = ""
+
+# 🎯 Sidebar für das Hinzufügen neuer Notizen
+with st.sidebar:
+    st.header("📝 Neue Notiz hinzufügen")
+    title = st.text_input("Titel der Notiz", value=st.session_state.title_input, key="title_input")
+    content = st.text_area("Inhalt der Notiz", value=st.session_state.content_input, key="content_input")
+    link = st.text_input("Link (optional)", value=st.session_state.link_input, key="link_input")
+    uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
+
     if st.button("➕ Notiz speichern"):
         full_text = content  # Stelle sicher, dass der Inhalt immer initialisiert wird
 
@@ -64,8 +80,10 @@ with st.sidebar:
         st.session_state.notes.append(note)
         st.success("✅ Notiz wurde gespeichert.")
 
-        # 🎯 Nach dem Speichern die Felder zurücksetzen
-        st.experimental_rerun()
+        # 🎯 Nach dem Speichern die Eingabefelder leeren
+        st.session_state.title_input = ""
+        st.session_state.content_input = ""
+        st.session_state.link_input = ""
 
 
 # 📌 Hauptinhalt: Anzeige der gespeicherten Notizen

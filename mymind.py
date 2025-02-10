@@ -1,9 +1,9 @@
 import streamlit as st
 import re
 import urllib.parse
+import json
 from collections import Counter
 from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassungen
-
 
 # Seitenkonfiguration
 st.set_page_config(
@@ -13,11 +13,7 @@ st.set_page_config(
 )
 
 # OpenAI API-Key aus Streamlit Secrets
-#st.write("Verfügbare Secrets:", list(st.secrets.keys()))
-# Versuche, den API-Key aus dem "secrets"-Dictionary zu holen
-api_key = st.secrets["secrets"].get("openaikey")
-
-#st.write(api_key)
+api_key = st.secrets["secrets"].get("openai_api_key")
 summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
 # Funktion zur Tag-Generierung
@@ -44,60 +40,85 @@ if not default_content and default_link:
 if "notes" not in st.session_state:
     st.session_state.notes = []
 
-# Anwendungstitel
-st.title("SmithMind POC")
+# Funktion zum Speichern von Notizen als JSON
+def save_notes_to_file():
+    with open("notizen.json", "w", encoding="utf-8") as f:
+        json.dump(st.session_state.notes, f, ensure_ascii=False, indent=4)
 
-# Notizerfassung
-st.header("Neue Notiz hinzufügen")
-title = st.text_input("Titel der Notiz", value=default_title)
-content = st.text_area("Inhalt der Notiz", value=default_content)  # Automatische Zusammenfassung wird hier gesetzt
-link = st.text_input("Link (optional)", value=default_link)
+# Funktion zum Laden von Notizen beim Start
+def load_notes_from_file():
+    try:
+        with open("notizen.json", "r", encoding="utf-8") as f:
+            st.session_state.notes = json.load(f)
+    except FileNotFoundError:
+        st.session_state.notes = []
 
-uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
+# Lade gespeicherte Notizen beim Start
+load_notes_from_file()
 
-if st.button("Notiz speichern"):
-    full_text = content  # Stelle sicher, dass der Inhalt immer initialisiert wird
+# 🔹 **Seitenleiste für neue Notizen**
+with st.sidebar:
+    st.header("Neue Notiz hinzufügen")
+    title = st.text_input("Titel der Notiz", value=default_title)
+    content = st.text_area("Inhalt der Notiz", value=default_content)  
+    link = st.text_input("Link (optional)", value=default_link)
+    uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
 
-    if uploaded_file is not None:
-        try:
-            file_content = uploaded_file.read().decode("utf-8", errors="ignore")
-        except Exception:
-            file_content = ""
-        full_text += "\n" + file_content
+    if st.button("Notiz speichern"):
+        full_text = content  # Stelle sicher, dass der Inhalt immer initialisiert wird
 
-    tags = generate_tags(full_text + " " + link)  # Tags auch aus der URL generieren
-    note = {"title": title, "content": full_text, "link": link, "tags": tags}
-    st.session_state.notes.append(note)
-    st.success("Notiz wurde gespeichert.")
+        if uploaded_file is not None:
+            try:
+                file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+            except Exception:
+                file_content = ""
+            full_text += "\n" + file_content
 
-# Anzeige der gespeicherten Notizen
-st.header("Gespeicherte Notizen")
-for note in st.session_state.notes:
-    st.subheader(note["title"])
-    st.write(note["content"])
-    if note["link"]:
-        st.write("Link:", note["link"])
-    st.write("Tags:", ", ".join(note["tags"]))
+        tags = generate_tags(full_text + " " + link)  # Tags auch aus der URL generieren
+        note = {"title": title, "content": full_text, "link": link, "tags": tags}
+        st.session_state.notes.append(note)
+        save_notes_to_file()  # Notiz speichern
+        st.success("Notiz wurde gespeichert.")
+
+# 🔹 **Hauptfenster: Anzeige der gespeicherten Notizen**
+st.title("Gespeicherte Notizen")
 
 # Einfache Suchfunktion
-st.header("Suche")
-query = st.text_input("Suchbegriff")
+query = st.text_input("🔍 Suchbegriff eingeben")
 if query:
-    results = []
+    results = [note for note in st.session_state.notes if 
+               query.lower() in note["title"].lower() or 
+               query.lower() in note["content"].lower() or 
+               query.lower() in " ".join(note["tags"]).lower()]
+    
+    if results:
+        st.subheader(f"🔎 {len(results)} Ergebnisse gefunden:")
+        for note in results:
+            st.subheader(note["title"])
+            st.write(note["content"])
+            if note["link"]:
+                st.write("🔗 Link:", note["link"])
+            st.write("🏷 Tags:", ", ".join(note["tags"]))
+    else:
+        st.warning("Keine passenden Notizen gefunden.")
+else:
+    # Falls keine Suche aktiv ist, zeige alle Notizen an
     for note in st.session_state.notes:
-        if (query.lower() in note["title"].lower() or 
-            query.lower() in note["content"].lower() or 
-            query.lower() in " ".join(note["tags"]).lower()):
-            results.append(note)
-    st.subheader("Ergebnisse")
-    for note in results:
         st.subheader(note["title"])
         st.write(note["content"])
         if note["link"]:
-            st.write("Link:", note["link"])
-        st.write("Tags:", ", ".join(note["tags"]))
+            st.write("🔗 Link:", note["link"])
+        st.write("🏷 Tags:", ", ".join(note["tags"]))
 
+# 🔹 **Download gespeicherter Notizen**
+st.sidebar.subheader("📥 Notizen herunterladen")
+if st.sidebar.button("Notizen als JSON speichern"):
+    with open("notizen.json", "rb") as f:
+        st.sidebar.download_button("📂 JSON herunterladen", f, file_name="notizen.json")
 
-
-
-      
+if st.sidebar.button("Notizen als TXT speichern"):
+    with open("notizen.txt", "w", encoding="utf-8") as f:
+        for note in st.session_state.notes:
+            f.write(f"🔹 {note['title']}\n{note['content']}\n🔗 {note['link']}\n🏷 {', '.join(note['tags'])}\n\n")
+    with open("notizen.txt", "rb") as f:
+        st.sidebar.download_button("📂 TXT herunterladen", f, file_name="notizen.txt")

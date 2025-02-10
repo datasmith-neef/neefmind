@@ -4,7 +4,6 @@ import urllib.parse
 from collections import Counter
 from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassungen
 
-
 # Seitenkonfiguration
 st.set_page_config(
     page_title="SmithMind POC",
@@ -13,12 +12,10 @@ st.set_page_config(
 )
 
 # OpenAI API-Key aus Streamlit Secrets
-#st.write("Verfügbare Secrets:", list(st.secrets.keys()))
-# Versuche, den API-Key aus dem "secrets"-Dictionary zu holen
 api_key = st.secrets["secrets"].get("openaikey")
 
-#st.write(api_key)
-summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
+# Initialisiere den Summarizer
+summarizer = WebpageSummarizer(api_key)
 
 # Funktion zur Tag-Generierung
 def generate_tags(text, num_tags=5):
@@ -44,44 +41,36 @@ if not default_content and default_link:
 if "notes" not in st.session_state:
     st.session_state.notes = []
 
-# Anwendungstitel
-st.title("SmithMind POC")
+# 🎯 Sidebar für das Hinzufügen neuer Notizen
+with st.sidebar:
+    st.header("📝 Neue Notiz hinzufügen")
+    title = st.text_input("Titel der Notiz", value=default_title)
+    content = st.text_area("Inhalt der Notiz", value=default_content)  # Automatische Zusammenfassung wird hier gesetzt
+    link = st.text_input("Link (optional)", value=default_link)
+    uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
 
-# Notizerfassung
-st.header("Neue Notiz hinzufügen")
-title = st.text_input("Titel der Notiz", value=default_title)
-content = st.text_area("Inhalt der Notiz", value=default_content)  # Automatische Zusammenfassung wird hier gesetzt
-link = st.text_input("Link (optional)", value=default_link)
+    if st.button("➕ Notiz speichern"):
+        full_text = content  # Stelle sicher, dass der Inhalt immer initialisiert wird
 
-uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
+        if uploaded_file is not None:
+            try:
+                file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+            except Exception:
+                file_content = ""
+            full_text += "\n" + file_content
 
-if st.button("Notiz speichern"):
-    full_text = content  # Stelle sicher, dass der Inhalt immer initialisiert wird
+        tags = generate_tags(full_text + " " + link)  # Tags auch aus der URL generieren
+        note = {"title": title, "content": full_text, "link": link, "tags": tags}
+        st.session_state.notes.append(note)
+        st.success("✅ Notiz wurde gespeichert.")
 
-    if uploaded_file is not None:
-        try:
-            file_content = uploaded_file.read().decode("utf-8", errors="ignore")
-        except Exception:
-            file_content = ""
-        full_text += "\n" + file_content
+# 📌 Hauptinhalt: Anzeige der gespeicherten Notizen
+st.title("📚 SmithMind Notizen")
 
-    tags = generate_tags(full_text + " " + link)  # Tags auch aus der URL generieren
-    note = {"title": title, "content": full_text, "link": link, "tags": tags}
-    st.session_state.notes.append(note)
-    st.success("Notiz wurde gespeichert.")
+st.header("🔍 Suche nach Notizen")
+query = st.text_input("Suchbegriff eingeben...")
 
-# Anzeige der gespeicherten Notizen
-st.header("Gespeicherte Notizen")
-for note in st.session_state.notes:
-    st.subheader(note["title"])
-    st.write(note["content"])
-    if note["link"]:
-        st.write("Link:", note["link"])
-    st.write("Tags:", ", ".join(note["tags"]))
-
-# Einfache Suchfunktion
-st.header("Suche")
-query = st.text_input("Suchbegriff")
+# 🔎 Suchfunktion
 if query:
     results = []
     for note in st.session_state.notes:
@@ -89,15 +78,20 @@ if query:
             query.lower() in note["content"].lower() or 
             query.lower() in " ".join(note["tags"]).lower()):
             results.append(note)
-    st.subheader("Ergebnisse")
+    
+    st.subheader("🔎 Suchergebnisse")
     for note in results:
         st.subheader(note["title"])
         st.write(note["content"])
         if note["link"]:
-            st.write("Link:", note["link"])
-        st.write("Tags:", ", ".join(note["tags"]))
+            st.write("🔗 Link:", note["link"])
+        st.write("🏷 Tags:", ", ".join(note["tags"]))
 
-
-
-
-      
+# 📌 Alle Notizen anzeigen
+st.header("📌 Gespeicherte Notizen")
+for note in st.session_state.notes:
+    st.subheader(note["title"])
+    st.write(note["content"])
+    if note["link"]:
+        st.write("🔗 Link:", note["link"])
+    st.write("🏷 Tags:", ", ".join(note["tags"]))

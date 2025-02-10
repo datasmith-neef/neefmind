@@ -64,6 +64,10 @@ with st.sidebar:
         st.session_state.notes.append(note)
         st.success("✅ Notiz wurde gespeichert.")
 
+        # 🎯 Nach dem Speichern die Felder zurücksetzen
+        st.experimental_rerun()
+
+
 # 📌 Hauptinhalt: Anzeige der gespeicherten Notizen
 st.title("📚 SmithMind Notizen")
 

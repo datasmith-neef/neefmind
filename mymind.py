@@ -44,11 +44,9 @@ if "notes" not in st.session_state:
 # 🎯 Sidebar für das Hinzufügen neuer Notizen
 with st.sidebar:
     st.header("📝 Neue Notiz hinzufügen")
-    
-    # Eingabefelder mit Session-State
-    title = st.text_input("Titel der Notiz", value=st.session_state.get("title", ""))
-    content = st.text_area("Inhalt der Notiz", value=st.session_state.get("content", ""))
-    link = st.text_input("Link (optional)", value=st.session_state.get("link", ""))
+    title = st.text_input("Titel der Notiz", value=default_title)
+    content = st.text_area("Inhalt der Notiz", value=default_content)  # Automatische Zusammenfassung wird hier gesetzt
+    link = st.text_input("Link (optional)", value=default_link)
     uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
 
     if st.button("➕ Notiz speichern"):
@@ -65,12 +63,6 @@ with st.sidebar:
         note = {"title": title, "content": full_text, "link": link, "tags": tags}
         st.session_state.notes.append(note)
         st.success("✅ Notiz wurde gespeichert.")
-
-        # 🔄 Eingabefelder nach dem Speichern leeren
-        st.session_state["title"] = ""
-        st.session_state["content"] = ""
-        st.session_state["link"] = ""
-
 
 # 📌 Hauptinhalt: Anzeige der gespeicherten Notizen
 st.title("📚 SmithMind Notizen")

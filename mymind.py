@@ -28,35 +28,39 @@ def generate_tags(text, num_tags=5):
 
 # URL-Parameter auslesen
 query_params = st.query_params
-default_title = urllib.parse.unquote(query_params.get("title", ""))
-default_content = urllib.parse.unquote(query_params.get("text", ""))
-default_link = urllib.parse.unquote(query_params.get("url", ""))
+
+# Sidebar-Zähler initialisieren: Beim ersten Aufruf werden ggf. Parameter als Default genutzt,
+# danach sollen die Felder leer sein.
+if "sidebar_counter" not in st.session_state:
+    st.session_state.sidebar_counter = 0
+
+if st.session_state.sidebar_counter == 0:
+    default_title = urllib.parse.unquote(query_params.get("title", ""))
+    default_content = urllib.parse.unquote(query_params.get("text", ""))
+    default_link = urllib.parse.unquote(query_params.get("url", ""))
+else:
+    default_title = ""
+    default_content = ""
+    default_link = ""
 
 # Falls kein Inhalt übergeben wurde, erstelle eine Zusammenfassung der Webseite
 if not default_content and default_link:
     default_content = summarizer.summarize(default_link)
 
-# Wenn das Reset-Flag gesetzt ist, überschreiben wir die Standardwerte
-if st.session_state.get("clear_fields", False):
-    default_title = ""
-    default_content = ""
-    default_link = ""
-    # Setzen Sie das Flag zurück, damit es nur einmal greift
-    st.session_state["clear_fields"] = False
-
-# Session-State initialisieren (Notizen beibehalten)
+# Notizen im Session-State initialisieren
 if "notes" not in st.session_state:
     st.session_state.notes = []
 
 # 🎯 Sidebar für das Hinzufügen neuer Notizen
 with st.sidebar:
     st.header("📝 Neue Notiz hinzufügen")
-    # Widgets ohne explizite Session-State-Manipulation, sondern mit Standardwerten,
-    # die wir oben ggf. zurückgesetzt haben.
-    title = st.text_input("Titel der Notiz", value=default_title, key="title")
-    content = st.text_area("Inhalt der Notiz", value=default_content, key="content")
-    link = st.text_input("Link (optional)", value=default_link, key="link")
-    uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"], key="uploaded_file")
+    counter = st.session_state.sidebar_counter  # aktueller Zählerwert
+
+    # Dynamische Keys mit dem Zähler als Suffix
+    title = st.text_input("Titel der Notiz", value=default_title, key=f"title_{counter}")
+    content = st.text_area("Inhalt der Notiz", value=default_content, key=f"content_{counter}")
+    link = st.text_input("Link (optional)", value=default_link, key=f"link_{counter}")
+    uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"], key=f"uploaded_file_{counter}")
 
     if st.button("➕ Notiz speichern"):
         full_text = content  # Sicherstellen, dass der Inhalt initialisiert ist
@@ -73,10 +77,8 @@ with st.sidebar:
         st.session_state.notes.append(note)
         st.success("✅ Notiz wurde gespeichert.")
 
-        # Setzen Sie ein Flag, damit die Felder beim nächsten Laden leer sind
-        st.session_state["clear_fields"] = True
-        # Kompletter Neuladevorgang der App, damit die Standardwerte neu gesetzt werden
-        st.experimental_rerun()
+        # Erhöhe den Zähler: Bei der nächsten Ausführung werden die Widgets mit neuen Keys erstellt
+        st.session_state.sidebar_counter += 1
 
 # 📌 Hauptinhalt: Anzeige der gespeicherten Notizen
 st.title("📚 SmithMind Notizen")
@@ -84,7 +86,6 @@ st.title("📚 SmithMind Notizen")
 st.header("🔍 Suche nach Notizen")
 query = st.text_input("Suchbegriff eingeben...")
 
-# 🔎 Suchfunktion
 if query:
     results = []
     for note in st.session_state.notes:
@@ -101,7 +102,6 @@ if query:
             st.write("🔗 Link:", note["link"])
         st.write("🏷 Tags:", ", ".join(note["tags"]))
 
-# 📌 Alle Notizen anzeigen
 st.header("📌 Gespeicherte Notizen")
 for note in st.session_state.notes:
     st.subheader(note["title"])

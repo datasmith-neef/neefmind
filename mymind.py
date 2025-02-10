@@ -17,7 +17,7 @@ st.set_page_config(
 # Versuche, den API-Key aus dem "secrets"-Dictionary zu holen
 api_key = st.secrets["secrets"].get("openaikey")
 
-st.write(api_key)
+#st.write(api_key)
 summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
 # Funktion zur Tag-Generierung

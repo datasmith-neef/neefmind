@@ -6,6 +6,7 @@ from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassunge
 
 # OpenAI API-Key aus Streamlit Secrets
 api_key = st.secrets.get("openai_api_key")
+st.write(api_key)
 summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
 print(api_key)

@@ -2,20 +2,17 @@ import streamlit as st
 import re
 import urllib.parse
 from collections import Counter
+from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassungen
+
+# OpenAI API-Key aus Streamlit Secrets
+api_key = st.secrets["openai_api_key"]
+summarizer = WebpageSummarizer(api_key)  # Summarizer initialisieren
 
 # Seitenkonfiguration
 st.set_page_config(
     page_title="SmithMind POC",
     page_icon=":memo:",
     layout="wide"
-)
-
-# Manifest-Link in den HTML-Code einfügen
-st.markdown(
-    """
-    <link rel="manifest" href="/manifest.json">
-    """,
-    unsafe_allow_html=True
 )
 
 # Funktion zur Tag-Generierung
@@ -28,13 +25,15 @@ def generate_tags(text, num_tags=5):
     return [word for word, count in freq.most_common(num_tags)]
 
 
-# URL-Parameter (vom Share Target) auslesen
+# URL-Parameter auslesen
 query_params = st.query_params
-
-# Sicherstellen, dass Werte als Strings verarbeitet werden
 default_title = urllib.parse.unquote(query_params.get("title", ""))
 default_content = urllib.parse.unquote(query_params.get("text", ""))
-default_link = urllib.parse.unquote(query_params.get("url", ""))  # Stelle sicher, dass URL korrekt übernommen wird
+default_link = urllib.parse.unquote(query_params.get("url", ""))
+
+# Falls kein Inhalt übergeben wurde, erstelle eine Zusammenfassung der Webseite
+if not default_content and default_link:
+    default_content = summarizer.summarize(default_link)
 
 # Session-State initialisieren
 if "notes" not in st.session_state:
@@ -46,8 +45,8 @@ st.title("SmithMind POC")
 # Notizerfassung
 st.header("Neue Notiz hinzufügen")
 title = st.text_input("Titel der Notiz", value=default_title)
-content = st.text_area("Inhalt der Notiz", value=default_content)
-link = st.text_input("Link (optional)", value=default_link)  # Hier wird der Link sicher übernommen
+content = st.text_area("Inhalt der Notiz", value=default_content)  # Automatische Zusammenfassung wird hier gesetzt
+link = st.text_input("Link (optional)", value=default_link)
 
 uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"])
 
@@ -92,3 +91,8 @@ if query:
         if note["link"]:
             st.write("Link:", note["link"])
         st.write("Tags:", ", ".join(note["tags"]))
+
+
+
+
+      

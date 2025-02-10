@@ -43,14 +43,22 @@ if "notes" not in st.session_state:
 # 🎯 Sidebar für das Hinzufügen neuer Notizen
 with st.sidebar:
     st.header("📝 Neue Notiz hinzufügen")
-    # Widgets mit eigenen Keys, sodass die Werte über session_state abrufbar und änderbar sind
-    title = st.text_input("Titel der Notiz", value=st.session_state.get("title", default_title), key="title")
-    content = st.text_area("Inhalt der Notiz", value=st.session_state.get("content", default_content), key="content")
-    link = st.text_input("Link (optional)", value=st.session_state.get("link", default_link), key="link")
-    uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"], key="uploaded_file")
+    # Widgets mit eigenen Keys; diese erstellen die Schlüssel in st.session_state
+    title = st.text_input("Titel der Notiz",
+                          value=st.session_state.get("title", default_title),
+                          key="title")
+    content = st.text_area("Inhalt der Notiz",
+                           value=st.session_state.get("content", default_content),
+                           key="content")
+    link = st.text_input("Link (optional)",
+                         value=st.session_state.get("link", default_link),
+                         key="link")
+    uploaded_file = st.file_uploader("Dokument hochladen (optional)",
+                                     type=["txt", "pdf"],
+                                     key="uploaded_file")
 
     if st.button("➕ Notiz speichern"):
-        full_text = content  # Stelle sicher, dass der Inhalt immer initialisiert wird
+        full_text = content  # Sicherstellen, dass der Inhalt initialisiert ist
 
         if uploaded_file is not None:
             try:
@@ -64,13 +72,12 @@ with st.sidebar:
         st.session_state.notes.append(note)
         st.success("✅ Notiz wurde gespeichert.")
 
-        # Nach dem Speichern die Eingabefelder zurücksetzen:
-        st.session_state.title = ""
-        st.session_state.content = ""
-        st.session_state.link = ""
-        # Das Zurücksetzen des File Uploaders funktioniert nicht immer, hier könnte ein
-        # st.experimental_rerun() helfen, wenn Sie die komplette Seite neu laden möchten.
-        # st.experimental_rerun()
+        # Nach dem Speichern die Eingabefelder zurücksetzen (mit Dictionary-Syntax):
+        st.session_state["title"] = ""
+        st.session_state["content"] = ""
+        st.session_state["link"] = ""
+        # Um auch den File Uploader zu leeren, kann ein kompletter Reload der Seite helfen:
+        st.experimental_rerun()
 
 # 📌 Hauptinhalt: Anzeige der gespeicherten Notizen
 st.title("📚 SmithMind Notizen")

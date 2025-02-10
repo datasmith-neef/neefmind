@@ -36,26 +36,27 @@ default_link = urllib.parse.unquote(query_params.get("url", ""))
 if not default_content and default_link:
     default_content = summarizer.summarize(default_link)
 
-# Session-State initialisieren
+# Wenn das Reset-Flag gesetzt ist, überschreiben wir die Standardwerte
+if st.session_state.get("clear_fields", False):
+    default_title = ""
+    default_content = ""
+    default_link = ""
+    # Setzen Sie das Flag zurück, damit es nur einmal greift
+    st.session_state["clear_fields"] = False
+
+# Session-State initialisieren (Notizen beibehalten)
 if "notes" not in st.session_state:
     st.session_state.notes = []
 
 # 🎯 Sidebar für das Hinzufügen neuer Notizen
 with st.sidebar:
     st.header("📝 Neue Notiz hinzufügen")
-    # Widgets mit eigenen Keys; diese erstellen die Schlüssel in st.session_state
-    title = st.text_input("Titel der Notiz",
-                          value=st.session_state.get("title", default_title),
-                          key="title")
-    content = st.text_area("Inhalt der Notiz",
-                           value=st.session_state.get("content", default_content),
-                           key="content")
-    link = st.text_input("Link (optional)",
-                         value=st.session_state.get("link", default_link),
-                         key="link")
-    uploaded_file = st.file_uploader("Dokument hochladen (optional)",
-                                     type=["txt", "pdf"],
-                                     key="uploaded_file")
+    # Widgets ohne explizite Session-State-Manipulation, sondern mit Standardwerten,
+    # die wir oben ggf. zurückgesetzt haben.
+    title = st.text_input("Titel der Notiz", value=default_title, key="title")
+    content = st.text_area("Inhalt der Notiz", value=default_content, key="content")
+    link = st.text_input("Link (optional)", value=default_link, key="link")
+    uploaded_file = st.file_uploader("Dokument hochladen (optional)", type=["txt", "pdf"], key="uploaded_file")
 
     if st.button("➕ Notiz speichern"):
         full_text = content  # Sicherstellen, dass der Inhalt initialisiert ist
@@ -72,11 +73,9 @@ with st.sidebar:
         st.session_state.notes.append(note)
         st.success("✅ Notiz wurde gespeichert.")
 
-        # Nach dem Speichern die Eingabefelder zurücksetzen (mit Dictionary-Syntax):
-        st.session_state["title"] = ""
-        st.session_state["content"] = ""
-        st.session_state["link"] = ""
-        # Um auch den File Uploader zu leeren, kann ein kompletter Reload der Seite helfen:
+        # Setzen Sie ein Flag, damit die Felder beim nächsten Laden leer sind
+        st.session_state["clear_fields"] = True
+        # Kompletter Neuladevorgang der App, damit die Standardwerte neu gesetzt werden
         st.experimental_rerun()
 
 # 📌 Hauptinhalt: Anzeige der gespeicherten Notizen

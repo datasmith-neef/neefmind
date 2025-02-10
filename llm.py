@@ -1,6 +1,6 @@
 class WebpageSummarizer:
     
-    
+    from openai import OpenAI
     def __init__(self, api_key):
         import os
         from openai import OpenAI    

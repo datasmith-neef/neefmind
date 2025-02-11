@@ -1,4 +1,5 @@
 import streamlit as st
+import sqlite3
 import hashlib
 import re
 import urllib.parse
@@ -6,25 +7,58 @@ from collections import Counter
 from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassungen
 
 # Seitenkonfiguration
-st.set_page_config(
-    page_title="SmithMind POC",
-    page_icon=":memo:",
-    layout="wide"
-)
+st.set_page_config(page_title="SmithMind POC", page_icon=":memo:", layout="wide")
 
-# Hilfsfunktion: Passwort hashen
+# ─────────────────────────────────────────────────────────────
+# SQLite Datenbankfunktionen zur persistente Speicherung der Nutzer
+# ─────────────────────────────────────────────────────────────
+def create_connection(db_file="users.db"):
+    # check_same_thread=False erlaubt den DB-Zugriff aus verschiedenen Threads
+    conn = sqlite3.connect(db_file, check_same_thread=False)
+    return conn
+
+def create_table(conn):
+    sql = """
+    CREATE TABLE IF NOT EXISTS users (
+        username TEXT PRIMARY KEY,
+        password TEXT NOT NULL
+    );
+    """
+    conn.execute(sql)
+    conn.commit()
+
+def add_user(username, hashed_password, conn):
+    try:
+        conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+
+def get_user(username, conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT username, password FROM users WHERE username = ?", (username,))
+    return cursor.fetchone()
+
+# Hilfsfunktion zum Hashen von Passwörtern
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-# Session-State initialisieren (Nutzer, Login-Status, aktueller Nutzer)
-if "users" not in st.session_state:
-    st.session_state["users"] = {}  # {username: hashed_password}
+# SQLite-Datenbank initialisieren
+conn = create_connection()
+create_table(conn)
+
+# ─────────────────────────────────────────────────────────────
+# Session-State initialisieren für Login-Status und aktuellen Nutzer
+# ─────────────────────────────────────────────────────────────
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 if "current_user" not in st.session_state:
     st.session_state["current_user"] = None
 
-# Oben ein zweispaltiges Layout: linke Spalte für den Titel, rechte Spalte für den Login-/Signup-Bereich
+# ─────────────────────────────────────────────────────────────
+# Kopfzeile: Linke Spalte zeigt den App-Titel, rechte Spalte den Authentifizierungsbereich
+# ─────────────────────────────────────────────────────────────
 col1, col2 = st.columns([3, 1])
 with col1:
     st.title("📚 SmithMind Notizen")
@@ -36,38 +70,42 @@ with col2:
             st.session_state["current_user"] = None
     else:
         st.subheader("Login / Signup")
-        # Auswahl zwischen Login und Signup (als horizontal angeordnete Radio-Buttons)
+        # Auswahl zwischen Login und Signup per horizontalem Radio-Button
         auth_mode = st.radio("", ["Login", "Signup"], key="auth_mode", horizontal=True)
         if auth_mode == "Signup":
             new_username = st.text_input("Username", key="signup_username")
             new_password = st.text_input("Passwort", type="password", key="signup_password")
             if st.button("Konto erstellen", key="signup_button"):
-                if new_username in st.session_state["users"]:
-                    st.error("Username existiert bereits!")
-                elif not new_username or not new_password:
+                if not new_username or not new_password:
                     st.error("Bitte beide Felder ausfüllen.")
                 else:
-                    st.session_state["users"][new_username] = hash_password(new_password)
-                    st.success("Konto erfolgreich erstellt!")
+                    hashed_pw = hash_password(new_password)
+                    if add_user(new_username, hashed_pw, conn):
+                        st.success("Konto erfolgreich erstellt!")
+                    else:
+                        st.error("Username existiert bereits!")
         else:  # Login
             username = st.text_input("Username", key="login_username")
             password = st.text_input("Passwort", type="password", key="login_password")
             if st.button("Einloggen", key="login_button"):
-                if username in st.session_state["users"] and st.session_state["users"][username] == hash_password(password):
+                user = get_user(username, conn)
+                if user and user[1] == hash_password(password):
                     st.session_state["logged_in"] = True
                     st.session_state["current_user"] = username
                     st.success("Erfolgreich eingeloggt!")
                 else:
                     st.error("Ungültige Anmeldedaten.")
 
-# Hauptinhalt: Notizenverwaltung nur für eingeloggte Nutzer
+# ─────────────────────────────────────────────────────────────
+# Hauptinhalt: Notizenverwaltung (nur für eingeloggte Nutzer sichtbar)
+# ─────────────────────────────────────────────────────────────
 if st.session_state["logged_in"]:
     # OpenAI API-Key aus Streamlit Secrets
     api_key = st.secrets["secrets"].get("openaikey")
-    # Initialisiere den Summarizer
+    # Initialisiere den Webpage-Summarizer
     summarizer = WebpageSummarizer(api_key)
 
-    # Hilfsfunktion: Tag-Generierung
+    # Hilfsfunktion zur Tag-Generierung
     def generate_tags(text, num_tags=5):
         words = re.findall(r'\w+', text.lower())
         stopwords = {"der", "die", "das", "und", "oder", "aber", "mit", "auf", "für", "von", "in",
@@ -78,7 +116,7 @@ if st.session_state["logged_in"]:
 
     # URL-Parameter auslesen
     query_params = st.query_params
-    # Sidebar-Zähler initialisieren: Beim ersten Aufruf werden ggf. URL-Parameter als Default genutzt.
+    # Sidebar-Zähler initialisieren: Wird genutzt, um dynamische Widget-Keys zu erzeugen
     if "sidebar_counter" not in st.session_state:
         st.session_state.sidebar_counter = 0
 
@@ -91,16 +129,15 @@ if st.session_state["logged_in"]:
         default_content = ""
         default_link = ""
 
-    # Falls kein Inhalt übergeben wurde, Zusammenfassung generieren
+    # Falls kein Inhalt übergeben wurde, kann (optional) eine Zusammenfassung generiert werden
     if not default_content and default_link:
         default_content = summarizer.summarize(default_link)
 
-    # Notizen im Session-State initialisieren
     if "notes" not in st.session_state:
         st.session_state.notes = []
 
     # ───────────────────────────────
-    # Sidebar: Neue Notiz hinzufügen (mit dynamischen Widget-Keys)
+    # Sidebar: Neue Notiz hinzufügen (mit dynamischen Keys, um die Felder nach dem Speichern zu leeren)
     # ───────────────────────────────
     with st.sidebar:
         st.header("📝 Neue Notiz hinzufügen")

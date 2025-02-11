@@ -1,5 +1,5 @@
 import streamlit as st
-import psycopg2
+import sqlite3
 import hashlib
 import re
 import urllib.parse
@@ -10,45 +10,43 @@ from llm import WebpageSummarizer  # Importiere die Klasse für Zusammenfassunge
 st.set_page_config(page_title="SmithMind POC", page_icon=":memo:", layout="wide")
 
 # ─────────────────────────────────────────────────────────────
-# Datenbankfunktionen (PostgreSQL) mit Credentials aus st.secrets
+# Datenbankfunktionen (SQLite) unter Verwendung von st.secrets
 # ─────────────────────────────────────────────────────────────
 def create_connection():
+    # Den Datenbank-Dateinamen aus den Secrets beziehen, Standard: "users.db"
+    db_filename = st.secrets.get("DB_FILENAME", "users.db")
     try:
-        conn = psycopg2.connect(
-            host=st.secrets["DB_HOST"],
-            database=st.secrets["DB_NAME"],
-            user=st.secrets["DB_USERNAME"],
-            password=st.secrets["DB_PASSWORD"],
-            port=st.secrets.get("DB_PORT", 5432)
-        )
+        conn = sqlite3.connect(db_filename, check_same_thread=False)
         return conn
     except Exception as e:
-        st.error(f"Fehler beim Verbinden zur Datenbank: {e}")
+        st.error(f"Fehler beim Verbinden zur SQLite-Datenbank: {e}")
         return None
 
 def create_table(conn):
-    with conn.cursor() as cur:
-        cur.execute("""
+    try:
+        conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY,
                 password TEXT NOT NULL
             );
         """)
         conn.commit()
+    except Exception as e:
+        st.error(f"Fehler beim Erstellen der Tabelle: {e}")
 
 def add_user(username, hashed_password, conn):
     try:
-        with conn.cursor() as cur:
-            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
-            conn.commit()
-            return True
-    except Exception:
+        conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_password))
+        conn.commit()
+        return True
+    except Exception as e:
+        st.error(f"Fehler beim Hinzufügen des Nutzers: {e}")
         return False
 
 def get_user(username, conn):
-    with conn.cursor() as cur:
-        cur.execute("SELECT username, password FROM users WHERE username = %s", (username,))
-        return cur.fetchone()
+    cursor = conn.cursor()
+    cursor.execute("SELECT username, password FROM users WHERE username = ?", (username,))
+    return cursor.fetchone()
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -67,7 +65,7 @@ if "current_user" not in st.session_state:
     st.session_state["current_user"] = None
 
 # ─────────────────────────────────────────────────────────────
-# Kopfzeile: Zwei-Spalten-Layout (linke Spalte: Titel, rechte Spalte: Authentifizierung)
+# Kopfzeile: Zweispaltiges Layout (links: Titel, rechts: Authentifizierung)
 # ─────────────────────────────────────────────────────────────
 col1, col2 = st.columns([3, 1])
 with col1:
@@ -109,7 +107,7 @@ with col2:
 # Hauptinhalt: Notizenverwaltung (nur für eingeloggte Nutzer sichtbar)
 # ─────────────────────────────────────────────────────────────
 if st.session_state["logged_in"]:
-    # OpenAI API-Key aus st.secrets abrufen und den Summarizer initialisieren
+    # OpenAI API-Key aus st.secrets abrufen und den Webpage-Summarizer initialisieren
     api_key = st.secrets["openaikey"]
     summarizer = WebpageSummarizer(api_key)
 
